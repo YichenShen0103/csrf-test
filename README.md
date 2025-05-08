@@ -6,7 +6,7 @@
 
 我们首先尝试一下直接删除这个帖子，利用调试工具截取网络数据包，发现这个参数传递主要借助 GET 传参方式，因此我们可以构造一个请求，利用 admin 本地的 cookie 对帖子进行操作。
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 19.01.40.png)
+![](./imgs/1.png)
 
 具体的 url 可以如下构造：
 
@@ -16,15 +16,15 @@ http://www.ctf-ruc.site:33181/admin.php?url=http%3A%2F%2Fwww.ctf-ruc.site%3A3318
 
 实现了如下效果：
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 19.09.23.png)
+![](./imgs/2.png)
 
 #### Level 2.
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 19.16.47.png)
+![](./imgs/3.png)
 
 观察源代码，发现这一题中的传参方式改成了 POST，对于 POST 方法，想要单纯利用 URL 直接完成诱骗是比较困难的，然而本题目中却存在一个致命的 XSS 漏洞，而这个漏洞正是发布新帖子这个功能中产生的，具体的漏洞位置如下，在加载从后端收到的数据并渲染到前端时直接采用了  innerHTML 嵌入的方式，这给了我们注入代码的空间。
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 19.56.22.png)
+![](./imgs/4.png)
 
 由于要注入的代码比较长，我们可以通过外挂一个站外 js 脚本：
 
@@ -41,7 +41,7 @@ fetch(`api.php`, {
 
 然后发布一个如下的帖子：
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 20.03.08.png)
+![](./imgs/6.png)
 
 然后输入如下的 url 进行 csrf 诱骗：
 
@@ -57,7 +57,7 @@ http://www.ctf-ruc.site:33184/index.php?url=http%3A%2F%2Fwww.ctf-ruc.site%3A3318
 
 本题与上一题唯一的不同就是使用了 token，但是 XSS 漏洞并没有被修复。更致命的是，这个 token 还被显式放在了前端，如下：
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 20.22.05.png)
+![](./imgs/10.png)
 
 我们还是使用一个站外脚本，通过 getElementById 方法可以精确的选中这个元素，并且在请求体中使用这个元素的 value 属性即可：
 
@@ -75,7 +75,7 @@ fetch(`api.php`, {
 
 然后发布一个新帖子：
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 20.19.13.png)
+![](./imgs/9.png)
 
 然后使用如下的 url 的模拟 csrf 诱骗：
 
@@ -91,7 +91,7 @@ admin 在打开主页时注入的脚本会从前端代码中提取出 token，�
 
 本题中删除了 token 防御方式，改为使用了一个两阶段的验证，但是 XSS 漏洞依然未修复。
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 20.27.00.png)
+![](./imgs/12.png)
 
 经过实验发现，如果越过第一阶段的验证采用和 Level 2 类似的方法直接发送请求后端会拒绝这个请求，因此我们还得通过一个脚本模拟两个阶段的请求。我们使用这样一个站外脚本：
 
@@ -112,7 +112,7 @@ fetch(`api.php?action=confirm`, {
 
 然后同样发布一个帖子：
 
-![](/Users/shenyc/Pictures/Screenshot 2025-05-08 at 20.31.54.png)
+![](./imgs/9.png)
 
 然后我们使用一个同样的 url 模拟 csrf 诱骗即可：
 
